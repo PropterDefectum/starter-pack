@@ -4,8 +4,7 @@
  - {Dwarf Fortress}
  - {PyLNP}
 
-[b]{DFHack}:[/b]
- - [url=http://www.bay12forums.com/smf/index.php?topic=106497]Stonesense[/url]  (in DFHack)
+[b]{DFHack}:[/b]  (includes [url=http://www.bay12forums.com/smf/index.php?topic=106497]Stonesense[/url])
  - {Stocksettings}
  - {TwbT}
 
@@ -15,9 +14,6 @@
 [b]Graphics:[/b]
  - ASCII
 {graphics}
-
-[b]Other Content:[/b]
- - {PerfectWorld XML}
 
 
 [size=14pt][b]Recent changelogs:[/b][/size]

@@ -2,14 +2,26 @@
 # TODO:  save checksums and timestamp in changelog or history file
 
 import hashlib
+import json
 import os
+import re
 import shutil
 import zipfile
 
-import yaml
-
 from . import component
 from . import paths
+
+
+def get_contents(kwargs):
+    """Read, edit, and format the contents template.  Removes lines for
+    missing components and warns if existing components are not listed."""
+    with open(paths.base('contents.txt')) as f:
+        template = ''.join(l for l in f.readlines() if '{' not in l or
+                           re.findall(r'{(.*?)}', l)[0] in kwargs)
+    template = template.replace('\n\n\n\n', '\n\n')
+    for item in set(re.findall(r'{(.*?)}', template)) - set(kwargs):
+        print('WARNING: ' + item + ' not listed in base/docs/contents.txt')
+    return template.format(**kwargs)
 
 
 def create_about():
@@ -33,19 +45,13 @@ def create_about():
     kwargs['utilities'] = '\n'.join(link(c) for c in component.UTILITIES)
     with open(paths.base('changelog.txt')) as f:
         kwargs['changelogs'] = '\n\n'.join(f.read().split('\n\n')[:5])
-    with open(paths.base('contents.txt')) as f:
-        template = f.read()
-    for item in kwargs:
-        if '{' + item + '}' not in template:
-            print('WARNING: ' + item + ' not listed in base/docs/contents.txt')
     with open(paths.lnp('about', 'contents.txt'), 'w') as f:
-        f.write(template.format(**kwargs))
+        f.write(get_contents(kwargs))
 
 
 def zip_pack():
     """Compress the build dir to a zipped pack."""
-    if not os.path.isdir(paths.dist()):
-        os.makedirs(paths.dist())
+    os.makedirs(paths.dist(), exist_ok=True)
     with zipfile.ZipFile(paths.zipped(), 'w', zipfile.ZIP_DEFLATED) as zf:
         for dirname, _, files in os.walk(paths.build()):
             zf.write(dirname, os.path.relpath(dirname, paths.build()))
@@ -56,22 +62,32 @@ def zip_pack():
 
 def release_docs():
     """Document the file checksum and create a forum post."""
-    shutil.copy(paths.lnp('about', 'contents.txt'), paths.dist())
-    with open(paths.base('PyLNP-json.yml')) as config:
-        dffd_id = yaml.load(config)['updates']['dffdID']
+    if paths.ARGS.stable:
+        shutil.copy(paths.lnp('about', 'contents.txt'), paths.dist())
+    with open(paths.lnp('PyLNP.json')) as config:
+        dffd_id = json.load(config)['updates']['dffdID']
     with open(paths.lnp('about', 'changelog.txt')) as f:
         changes = f.read().split('\n\n')[0]
     sha256 = hashlib.sha256()
     with open(paths.zipped(), 'rb') as f:
         for chunk in iter(lambda: f.read(8192), b''):
             sha256.update(chunk)
-    checksum = sha256.hexdigest()
-    s = ('The Starter Pack has updated to {}!  As usual, [url=http://dffd'
-         '.bay12games.com/file.php?id={}]you can get it here.[/url]\n\n'
-         '\n\n{}\n\nSHA256:  {}').format(
-             paths.PACK_VERSION, dffd_id, changes, checksum)
+    post_kwargs = {
+        'PACK_VERSION': paths.pack_ver(warn=False),
+        'LINK': 'http://dffd.bay12games.com/file.php?id=' + dffd_id,
+        'CHANGELOG': changes,
+        'CHECKSUM': sha256.hexdigest(),
+        'BITS': paths.BITS,
+        }
+    key = 'forum_post' if paths.ARGS.stable else 'unstable_forum_post'
     with open(paths.dist('forum_post.txt'), 'w') as f:
-        f.write(s)
+        f.write(paths.CONFIG.get(key, '')
+                .replace('_\n', '\n').format(**post_kwargs))
+        if not paths.ARGS.stable:
+            with open(paths.lnp('about', 'contents.txt')) as contents:
+                f.write('\n[spoiler=Full contents]\n')
+                f.write(contents.read())
+                f.write('\n[/spoiler]')
 
 
 def main():

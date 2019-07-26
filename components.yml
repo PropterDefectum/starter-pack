@@ -1,156 +1,185 @@
 # Each component, under files/utilities/graphics:
 #     SHOULD have a "bay12" key set to the forum thread number
-#     MUST have "host" set to one of "dffd", "github", or "manual"
+#     SHOULD have "host" set to one of "dffd", "github-asset", "github-source",
+#       "bitbucket", or "manual".  If unset, defaults to "dffd" if "host" is an int,
+#       "github-source" if under graphics, or "github-asset" otherwise.
 #     MUST have "ident" set if host is not "manual"
 #     MUST otherwise set "dl_link", "updated", and "version"
 #     MUST set "extract_to" for files (see extract.py for details)
-#     SHOULD provide a tooltip string if the component is a utility
+#     SHOULD add missing keys to "manifest"[.json] for graphics or utilities
 #     MAY set "needs_dfhack" to True to avoid useless install
+#     MUST set "install-after" if install order matters (eg DF>DFHack>TwbT)
+#     MAY set "requires_bits" to "32" or "64" to avoid useless install if arch-dependent
 files:
     DFHack:
         bay12: 139553
-        host: github
         ident: DFHack/dfhack
-    PerfectWorld XML:
-        bay12: 57428
-        host: dffd
-        ident: 9672
-        extract_to: utilities/PerfectWorld
+        extract_to: df
+        install_after: Dwarf Fortress
     PyLNP:
         bay12: 140808
         host: bitbucket
         ident: Pidgeot/python-lnp
-        extract_to: |
-            PyLNP.exe:build/Starter Pack Launcher (PyLNP).exe
-    Stocksettings:
+        os-win:
+            extract_to: |
+                PyLNP.exe:build/Starter Pack Launcher (PyLNP).exe
+        os-linux:
+            extract_to: |
+                PyLNP:build/starter-pack-launcher
+        os-osx:
+            extract_to: |
+                PyLNP.app:build/Starter Pack Launcher (PyLNP).app
+    Stocksettings presets:
         bay12: 146213
-        host: dffd
         ident: 10170
         extract_to: df/stocksettings
         needs_dfhack: True
+        install_after: Dwarf Fortress
     TwbT:
         bay12: 138754
-        host: github
         ident: mifki/df-twbt
-        extract_to: |
-            {DFHACK_VER}/automaterial.plug.dll:plugins/automaterial.plug.dll
-            {DFHACK_VER}/mousequery.plug.dll:plugins/mousequery.plug.dll
-            {DFHACK_VER}/resume.plug.dll:plugins/resume.plug.dll
-            {DFHACK_VER}/twbt.plug.dll:plugins/twbt.plug.dll
+        os-win:
+            extract_to: |
+                {DFHACK_VER}/mousequery.plug.dll:plugins/
+                {DFHACK_VER}/twbt.plug.dll:plugins/
+        os-linux:
+            extract_to: |
+                {DFHACK_VER}/mousequery.plug.so:plugins/
+                {DFHACK_VER}/twbt.plug.so:plugins/
+        os-osx:
+            extract_to: |
+                {DFHACK_VER}/twbt.plug.dylib:plugins/
         needs_dfhack: True
-utilities:
-    Announcement Window:
-        bay12: 153777
+        install_after: DFHack
+    Quickfort_64:
+        requires_os: win
+        requires_bits: "64"
+        bay12: "126076.msg7386267#msg7386267"
         host: manual
-        dl_link: https://github.com/NuAoA/AnnouncementWindow/releases/download/1.1b/AnnouncementWindow-1.1b-win32.zip
-        version: 1.1b
-        updated: 2015-11-10
-        manifest:
-            tooltip: A window for announcements, with customisable colours and filters.
+        dl_link: http://download1072.mediafire.com/xywpk44sp8ug/l3t59kdp3uj4s4y/Quickfort_2.04_AHK64bit.zip
+        version: "1"
+        updated: "2017-03-10"
+        extract_to: lnp/utilities/Quickfort
+        install_after: Quickfort
+utilities:
     Armok Vision:
+        requires_os: win linux
         bay12: 146473
-        host: github
         ident: JapaMala/armok-vision
         needs_dfhack: True
-        manifest:
-            tooltip: A full 3D visualiser - shows off Dwarf Fortress with unprecedented detail and beauty.  (64bit)
     DF Story Maker:
+        requires_os: win
         bay12: 128570
-        host: dffd
         ident: 7832
         manifest:
             tooltip: Story Maker:Creates a filtered version of the gamelog, great for... making stories.
     Dorven Realms:
+        requires_os: win
         bay12: 138366
-        host: dffd
         ident: 8553
         manifest:
             tooltip: Creates a Minecraft level from exported world maps (dfhack "exportlegends maps" in legends mode).
     Dwarf Mockup:
+        requires_os: win
         bay12: 143546
-        host: dffd
-        ident: 9654
+        host: bitbucket
+        ident: fredsen/dwarfmockup
         manifest:
             tooltip: DF-like interface for the creation of Quickfort blueprints, with some nice helper features
-    Dwarf Therapist:
-        bay12: 122968
-        host: github
-        ident: splintermind/Dwarf-Therapist
+    Dwarf Portrait:
+        requires_os: win
+        bay12: 158930
+        ident: JapaMala/Dwarf-Portrait
         manifest:
-            tooltip: Makes managing your dwarves' jobs and psychology easy! (NB - DFHack "autolabor" must be disabled).
+            tooltip: View generated sketch versions of any creature in DF
+    Dwarf Therapist:
+        requires_os: win
+        bay12: 168411
+        ident: Dwarf-Therapist/Dwarf-Therapist
     Isoworld:
+        requires_os: win
         bay12: 70700
-        host: dffd
         ident: 3418
         manifest:
+            readme: isoworld/Readme.txt
             tooltip: Makes an isometric world map from exported detailed maps, or connects to DF for a 'detailed view' in Adventure Mode.
     Legends Browser:
         bay12: 155307
-        host: dffd
-        ident: 11619
+        ident: robertjanetzko/LegendsBrowser
         manifest:
             tooltip: An in-browser legends utility, available for all operating systems.
+            osx_exe: Legends Browser.app/Contents/MacOS/JavaAppLauncher
     Legends Viewer:
+        requires_os: win
         bay12: 154617
-        host: dffd
         ident: 11455
         manifest:
             tooltip: You've always wished legends mode was this good.  Sorting, searching, hyperlinks, mapped locations...
     PerfectWorld:
+        requires_os: win
         bay12: 57428
-        host: dffd
         ident: 2354
         manifest:
+            readme: PerfectWorldDF_Manual.html
             tooltip: Advanced, precise, custom world generation tool - this is how people generate maps of real places.
     Picturefort:
+        requires_os: win
         bay12: 138590
-        host: dffd
         ident: 8564
         manifest:
             tooltip: Makes Quickfort blueprints from images, which can be much easier.
     Quickfort:
+        requires_os: win
         bay12: 35931
-        host: dffd
         ident: 11853
+        manifest:
+            readme: Readme_Quickfort.txt
+    SoundCenSe:
+        requires_os: win
+        bay12: 159567
+        ident: Algorithman/SoundCenSe
     Soundsense:
         bay12: 60287
-        host: dffd
         ident: 11849
         manifest:
             tooltip: A Sound+Music engine for DF - it reads the gamelog, and plays appropriate sounds and seasonal music.
+            linux_exe: soundSense.sh
+            osx_exe: soundSense.sh
     World Viewer:
+        requires_os: win
         bay12: 128932
-        host: dffd
-        ident: 11454
+        32bit:
+            ident: 7851
+        64bit:
+            ident: 11454
         manifest:
-            tooltip: Another third-party legends viewer, which takes advantage of extras from DFHack "exportlegends".  (64bit)
+            tooltip: Another third-party legends viewer, which takes advantage of extras from DFHack "exportlegends".
 graphics:
     CLA:
         bay12: 105376
-        host: github/tag
-        ident: fricy/CLA
-    Gemset:
+        ident: DFgraphics/CLA
+    DungeonSet:
+        bay12: 152766
+        ident: 11637
+    GemSet:
         bay12: 150753
-        host: github/tag
-        ident: fricy/GemSet
+        ident: DFgraphics/GemSet
         needs_dfhack: True
     Ironhand:
         bay12: 53180
-        host: github/tag
-        ident: fricy/Ironhand
+        ident: DFgraphics/Ironhand
     Mayday:
         bay12: 137370
-        host: github/tag
-        ident: fricy/Mayday
+        ident: DFgraphics/Mayday
+    Meph:
+        bay12: 161047
+        ident: jecowa/Meph
     Obsidian:
         bay12: 126934
-        host: github/tag
-        ident: fricy/Obsidian
+        ident: DFgraphics/Obsidian
     Phoebus:
         bay12: 152698
-        host: github/tag
-        ident: fricy/Phoebus
+        ident: DFgraphics/Phoebus
     Spacefox:
         bay12: 129219
-        host: github/tag
-        ident: fricy/Spacefox
+        ident: DFgraphics/Spacefox

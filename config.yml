@@ -1,8 +1,8 @@
 ###   Various configurable bits.  Also check command-line options with `main.py -h`  ###
 # Packname, will format with first line of base/changelog.txt
-packname: "PeridexisErrant's Starter Pack {}"
+packname: "PropterDefectum {}"
 # Which graphics pack should be installed by default
-default_graphics: Phoebus
+default_graphics: Ironhand
 # Forum post, see dist.py and save with whitespace!
 forum_post: |
     The Starter Pack has updated to {PACK_VERSION}!

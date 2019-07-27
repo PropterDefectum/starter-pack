@@ -51,6 +51,8 @@ def create_about():
 
 def zip_pack():
     """Compress the build dir to a zipped pack."""
+    if paths.HOST_OS == 'osx':
+        os.remove(paths.df() + '/libs/SDL_image.framework/Frameworks')
     os.makedirs(paths.dist(), exist_ok=True)
     with zipfile.ZipFile(paths.zipped(), 'w', zipfile.ZIP_DEFLATED) as zf:
         for dirname, _, files in os.walk(paths.build()):

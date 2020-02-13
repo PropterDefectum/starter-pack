@@ -19,7 +19,7 @@ with suppress(IOError):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--os', choices=['win', 'linux', 'osx'], default=native_os)
-parser.add_argument('--bits', choices=['32', '64',], default='64')
+parser.add_argument('--bits', choices=['32', '64'], default='64')
 parser.add_argument('--stable', dest='stable', action='store_true')
 parser.add_argument('--unstable', dest='stable', action='store_false')
 parser.set_defaults(stable=True)
@@ -42,8 +42,10 @@ def pack_ver(*, warn=True):
     """Return the current version string of the created pack."""
     with open('base/changelog.txt') as f:
         ver = f.readline().strip()
-    if warn and not ver.startswith(df_ver()):
-        print('ERROR:  pack version must start with DF version.')
+        if warn and not ver.startswith(df_ver()):
+            print('ERROR:  pack version must start with DF version.')
+        for _ in range(100):
+            assert not f.readline().startswith(ver), ver + " in changelog twice"
     return ver
 
 

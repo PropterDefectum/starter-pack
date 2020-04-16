@@ -140,7 +140,7 @@ def unzip_to(filename, target_dir=None, path_pairs=None):
     # More complex, but faster for zips to do it this way
     with zipfile.ZipFile(filename) as zf:
         files = dict(a for a in zip(zf.namelist(), zf.infolist())
-                     if not a[0].endswith('/'))
+                     if not (a[0].endswith('/') or "__MACOSX/" in a[0]))
         prefix = os.path.commonpath(list(files)) if len(files) > 1 else ''
         for name, info in files.items():
             out = os.path.join(target_dir, os.path.relpath(name, prefix))
@@ -156,8 +156,8 @@ def nonzip_extract(filename, target_dir=None, path_pairs=None):
     the .tar.bz2 archived DF releases (complicated header issue).
     macOS disk images (.dmg) are also unsupported by Python.
     """
-    if filename.endswith('.exe') and paths.HOST_OS == 'win' \
-            or filename.endswith('.jar'):
+    if (filename.endswith('.exe') and paths.HOST_OS == 'win') \
+            or filename.endswith('.jar') or filename.endswith('.lua'):
         _copyfile(filename,
                   os.path.join(target_dir, os.path.basename(filename)))
         return True
@@ -165,6 +165,7 @@ def nonzip_extract(filename, target_dir=None, path_pairs=None):
     with tempfile.TemporaryDirectory() as tmpdir:
         if not unpack_anything(filename, tmpdir):
             raise RuntimeError('Could not extract file {}'.format(filename))
+        shutil.rmtree(os.path.join(tmpdir, "__MACOSX"), ignore_errors=True)
         # Copy from tempdir to destination
         files = [os.path.join(root, f)
                  for root, _, files in os.walk(tmpdir) for f in files]
@@ -183,7 +184,7 @@ def nonzip_extract(filename, target_dir=None, path_pairs=None):
                 if os.path.exists(os.path.join(tmpdir, prefix, inpath)):
                     _copyfile(os.path.join(tmpdir, prefix, inpath), outpath)
                 else:
-                    print('WARNING:  "{}" not found in "{}"'.format(
+                    raise FileNotFoundError('WARNING:  "{}" not found in "{}"'.format(
                           inpath, os.path.basename(filename)))
     return True
 
@@ -267,20 +268,48 @@ def extract_comp(comp):
 
 
 def extract_everything():
-    """Extract every component, respecting order requirements."""
-    queue = TaskQueue()
-    def enqueue_comp(comp):
-        after = [ comp.install_after ] if comp.install_after else []
-        queue.add(comp.name, comp, prereqs=after)
+    """Extract everything in components.yml, respecting order requirements."""
+    def q_key(comp):
+        """Decide extract priority by pointer-chase depth, filesize in ties."""
+        after = {c.install_after: c.name for c in component.ALL.values()}
+        name, seen = comp.name, []
+        while name in after:
+            seen.append(name)
+            name = after.get(name)
+            if name in seen:
+                raise ValueError('Cyclic "install_after" config detected: ' +
+                                 ' -> '.join(seen + [name]))
+        return len(seen), os.path.getsize(comp.path)
 
-    for comp in component.ALL.values():
-        enqueue_comp(comp)
-    for path in ('curr_baseline', 'graphics/ASCII'):
-        comp = component.ALL['Dwarf Fortress']._replace(name=path,
-                                                        extract_to=path)
-        enqueue_comp(comp)
-    for comp in queue:
-        extract_comp(comp)
+    queue = list(component.ALL.values()) + [
+        component.ALL['Dwarf Fortress']._replace(name=path, extract_to=path)
+        for path in ('curr_baseline', 'graphics/ASCII')]
+    queue.sort(key=q_key, reverse=True)
+    with concurrent.futures.ProcessPoolExecutor(8) as pool:
+        futures = dict()
+        while queue:
+            while sum(f.running() for f in futures.values()) < 8:
+                for idx, comp in enumerate(queue):
+                    if comp.extract_to is False:
+                        assert comp.filename.endswith(".ini")
+                        queue.pop(idx)
+                        continue  # for Therapist, handled in build.py
+                    aft = futures.get(comp.install_after)
+                    # Even if it's highest-priority, wait for parent job(s)
+                    if aft is None or aft.done():
+                        futures[comp.name] = extract_comp(pool, queue.pop(idx))
+                        break  # reset index or we might pop the wrong item
+                else:
+                    break  # if there was nothing eligible to extract, sleep
+            time.sleep(0.01)
+    failed = [k for k, v in futures.items() if v.exception() is not None]
+    for key in failed:
+        comp = component.ALL.pop(key, None)
+        for lst in (component.FILES, component.GRAPHICS, component.UTILITIES):
+            if comp in lst:
+                lst.remove(comp)
+    if failed:
+        print('ERROR:  Could not extract: ' + ', '.join(failed))
 
 
 def add_lnp_dirs():

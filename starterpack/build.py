@@ -66,7 +66,7 @@ def fixup_manifest(filename, comp, **kwargs):
             print('WARNING:  {}: {} is provided upstream'.format(filename, k))
     manifest.update(file_man)
     # Warn about and discard incompatibility flag
-    if (manifest.get('df_max_version') or '0') > paths.df_ver():
+    if (manifest.get('df_min_version') or '0') > paths.df_ver():
         print('WARNING: overriding df_min_version {} for {}'.format(
             manifest.get('df_min_version'), comp.name))
         manifest.pop('df_min_version', None)
@@ -107,6 +107,12 @@ def _soundsense_xml():
         for line in config:
             if 'gamelog.txt' in line:
                 f.write(line.replace('..', relpath))
+            elif "<disabledSounds/>" in line:
+                f.write(
+                    '\t<disabledSounds>'
+                    '<item path="./packs/default/sample.xml"/>'
+                    '</disabledSounds>'
+                )
             else:
                 f.write(line)
 
@@ -220,6 +226,13 @@ def _exes_for(util):
     return {'win_exe': win_exe, 'osx_exe': osx_exe, 'linux_exe': linux_exe}
 
 
+def _announcement_window_config():
+    # Fixes icons configuration; upstream looks pretty dead :-/
+    cfg = paths.utilities("Announcement Window", "Settings.cfg")
+    assert not os.path.exists(cfg)
+    shutil.copyfile(paths.base("announcement-window-settings.cfg"), cfg)
+
+
 def create_utilities():
     """Confgure utilities metadata and check config files."""
     # Detailed checks for complicated config
@@ -227,6 +240,7 @@ def create_utilities():
     _soundCenSe_config()
     _therapist_ini()
     _armok_vision_plugin()
+    _announcement_window_config()
     # Need file extension for association for readme-opener
     for readme in glob.glob(paths.utilities('*', 'README')):
         os.rename(readme, readme + '.txt')
@@ -247,6 +261,7 @@ def _twbt_settings(pack):
     """Set TwbT-specific options for a graphics pack."""
     leave_text_tiles = ('CLA', 'DungeonSet')
     if not os.path.isfile(paths.df('hack', 'plugins', 'twbt.plug.dll')):
+        assert "TwbT" not in component.ALL, "twbt plugin in wrong place?"
         return
     if component.ALL.get('TwbT').version >= 'v5.77' and paths.BITS != '64':
         raise RuntimeError('This version of TwbT does not support 32-bit.')
@@ -338,7 +353,7 @@ def build_lnp_dirs():
 
     # Create new PyLNP.json
     with open(paths.base('PyLNP-json.yml')) as f:
-        pylnp_conf = yaml.load(f)
+        pylnp_conf = yaml.load(f, Loader=yaml.Loader)
     pylnp_conf['updates']['packVersion'] = paths.pack_ver()
     pylnp_conf['updates']['dffdID'] = paths.CONFIG['dffdID']
     if not paths.ARGS.stable:
@@ -346,6 +361,12 @@ def build_lnp_dirs():
     for hack in pylnp_conf['dfhack'].values():
         # remove trailing newline from multiline tooltips
         hack['tooltip'] = hack['tooltip'].strip()
+    if "TwbT" not in component.ALL:
+        for k, v in dict(pylnp_conf['dfhack']).items():
+            for cmd in ("twbt", "multilevel"):
+                if v["command"].startswith(cmd):
+                    pylnp_conf['dfhack'].pop(k, None)
+        os.remove(paths.df('dfhack_PeridexisErrant.init'))
     with open(paths.lnp('PyLNP.json'), 'w') as f:
         json.dump(pylnp_conf, f, indent=2)
     # Create init files with any DFHack options with enabled=True

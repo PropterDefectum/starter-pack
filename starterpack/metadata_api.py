@@ -36,7 +36,7 @@ def cache(method=lambda *_: None, *, saved={}, dump=False, expiration=30*60):
     if not saved:
         try:
             with open('_cached.yml') as f:
-                saved.update(yaml.load(f))
+                saved.update(yaml.load(f, Loader=yaml.Loader))
                 print('Loaded metadata from cache file')
         except IOError:
             saved.update({'metadata': {}, 'timestamps': {}})

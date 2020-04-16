@@ -16,9 +16,18 @@ files:
         ident: DFHack/dfhack
         extract_to: df
         install_after: Dwarf Fortress
+    exportlegends patch:  # TODO: remove this after DFHack 0.47.04-beta1
+        bay12: 139553
+        ident: exportlegends
+        host: manual
+        dl_link: https://raw.githubusercontent.com/DFHack/scripts/8618cd0b0a17935fe07f329b249726cda61f5bdf/exportlegends.lua
+        version: "1"
+        updated: "2020-04-05"
+        extract_to: df/hack/scripts/
+        needs_dfhack: True
+        install_after: DFHack
     PyLNP:
         bay12: 140808
-        host: bitbucket
         ident: Pidgeot/python-lnp
         os-win:
             extract_to: |
@@ -37,7 +46,7 @@ files:
         install_after: Dwarf Fortress
     TwbT:
         bay12: 138754
-        ident: mifki/df-twbt
+        ident: thurin/df-twbt  # mifki/df-twbt  ## using alternative for pre-release
         os-win:
             extract_to: |
                 {DFHACK_VER}/twbt.plug.dll:plugins/
@@ -59,7 +68,15 @@ files:
         updated: "2017-03-10"
         extract_to: lnp/utilities/Quickfort
         install_after: Quickfort
-    Announcement window icons:
+    Basic sounds pack:
+        bay12: "126076.msg8095366#msg8095366"
+        host: manual
+        dl_link: https://download1639.mediafire.com/h6jcnmydx7bg/bumhy495a3spr0m/packs+mini+%282020-02-20%29.zip
+        version: "2020-02-20"
+        updated: "2020-02-20"
+        extract_to: "lnp/utilities/Soundsense"
+        install_after: "Soundsense"
+    Ann. window icons:
         requires_os: win
         bay12: 153777
         host: manual
@@ -80,6 +97,8 @@ utilities:
         bay12: 146473
         ident: JapaMala/armok-vision
         needs_dfhack: True
+        manifest:
+            tooltip: Armok Vision visualises your fortress in real-time true 3D!
     DF Story Maker:
         requires_os: win
         bay12: 128570
@@ -106,7 +125,6 @@ utilities:
         manifest:
             tooltip: View generated sketch versions of any creature in DF
     Dwarf Therapist:
-        requires_os: win
         bay12: 168411
         ident: Dwarf-Therapist/Dwarf-Therapist
     Isoworld:
@@ -158,6 +176,11 @@ utilities:
             tooltip: A Sound+Music engine for DF - it reads the gamelog, and plays appropriate sounds and seasonal music.
             linux_exe: soundSense.sh
             osx_exe: soundSense.sh
+    Soundsense RS:
+        bay12: 174585
+        ident: prixt/soundsense-rs
+        manifest:
+            tooltip: Soundsense alternative; newer but doesn't need Java
     World Viewer:
         requires_os: win
         bay12: 128932
@@ -196,3 +219,6 @@ graphics:
     Spacefox:
         bay12: 129219
         ident: DFgraphics/Spacefox
+    Vettlingr:
+        bay12: 172078
+        ident: 14072
